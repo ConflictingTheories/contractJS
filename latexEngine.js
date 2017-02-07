@@ -74,12 +74,14 @@ const latexEngine = {
         this._initSystemConfig();
         // Setup Macros
         this._initDefaultMacros();
-        // Establish Styles for Use (Defaults)
+
+        // Establish Styles for Use (Defaults) (extensible)
         this._setStyle("bf", "\\textbf{", "}");
         this._setStyle("it", "\\emph{", "}");
         this._setStyle("ul", "\\ul{", "}");
         this._setStyle("st", "\\st{", "}");
-        // Establish colours available for use (Defaults)
+
+        // Establish colours available for use (Defaults) (Extensible)
         this._setColour("text", "#000000", "HTML"); // Default Colour
         this._setColour("new", "#0000AA", "HTML"); // Revision Highlighting
         this._setColour("old", "#AA0000", "HTML"); // Revision Highlighting
@@ -127,16 +129,74 @@ const latexEngine = {
     // ================================>
     // Generate PDF File
     toPDF: () => {
-        // Store to this._pdf & return
+        return new Promise((resolve, reject) => {
+            let input = this._sys.concat(this._macro).concat(this._latex)
+            // Store to this._pdf & return
+            let stream = LTX(input.join(""));
+            let pdfData = [];
+            try {
+                stream.on('data', (chunk) => {
+                    pdfData.push(chunk);
+                });
+                stream.on('end', () => {
+                    this._pdf = pdfData;
+                    resolve(pdfData);
+                })
+            } catch (e) {
+                console.error(e);
+                reject(e);
+            }
+        });
+    },
+    // Generate base64 Encoded PDF File
+    toPDF64: () => {
+        return new Promise((resolve, reject) => {
+            let input = this._sys.concat(this._macro).concat(this._latex)
+            // Store to this._pdf & return
+            let stream = LTX(input.join(""));
+            let pdfData = [];
+            try {
+                stream.on('data', (chunk) => {
+                    pdfData.push(chunk.toString('base64'));
+                });
+                stream.on('end', () => {
+                    this._pdf = pdfData;
+                    resolve(pdfData);
+                })
+            } catch (e) {
+                console.error(e);
+                reject(e);
+            }
+        });
     },
     // Generate DVI File
     toDVI: () => {
         // Store to this._dvi & return
+        return new Promise((resolve, reject) => {
+            let input = this._sys.concat(this._macro).concat(this._latex)
+            // Store to this._pdf & return
+            let stream = LTX(input.join(""), {
+                format: 'dvi'
+            });
+            let pdfData = [];
+            try {
+                stream.on('data', (chunk) => {
+                    pdfData.push(chunk);
+                });
+                stream.on('end', () => {
+                    this._pdf = pdfData;
+                    resolve(pdfData);
+                })
+            } catch (e) {
+                console.error(e);
+                reject(e);
+            }
+        });
     },
     // Generate Latex File
     toLTX: () => {
         let output = this._sys.concat(this._macro).concat(this._latex)
-        return output.join("");
+        return Promise.resolve(output.join(""));
     },
 
     // -----STREAM BASED UTILITIES-----
@@ -211,7 +271,6 @@ const latexEngine = {
             return "neq"
         }
     },
-
     // Conditional Put
     putIf: (condition, t_str) => {
         return condition ?
@@ -240,7 +299,6 @@ const latexEngine = {
 
     // ----- STRUCTURES & DOCUMENT TEMPLATES ------
     // ===========================================>
-
     // Generate a Dynamic Table
     table: (columns, array) => {
         let coltypes = ["| "];
@@ -251,25 +309,24 @@ const latexEngine = {
         for (let i = 0; i < array.length; i++) {
             entries.push("\\bottomrule\n")
             for (let j = 0; j < columns.length; j++) {
-                j == column.length - 1 ?
+                j === column.length - 1 ?
                     entries.push(array[i][j] + "\\\\") :
                     entries.push(array[i][j] + " & ");
             }
             entries.push("\n\\toprule\n");
-            if (i == 0) {
+            if (i === 0) {
                 entries.push("\\endhead\n");
             }
         }
-        var out = ["\\newcolumntype{g}{>{\\vfill\\centering}X}~\n",
-            "\\newcolumntype{Y}{>{\\vfill\\RaggedRight\\arraybackslash}X}~\n",
-            "\\newcolumntype{Z}{>{\\vfill\\centering\\arraybackslash}X}",
-            "\\begin{tabularx}{\\textwidth}{" + coltypes.join("") + "}\n",
-            entries.join("") + "\n",
-            "\\end{tabularx}\n\\flushleft"
-        ];
+        let out = [];
+        out.push("\\newcolumntype{g}{>{\\vfill\\centering}X}~\n");
+        out.push("\\newcolumntype{Y}{>{\\vfill\\RaggedRight\\arraybackslash}X}~\n");
+        out.push("\\newcolumntype{Z}{>{\\vfill\\centering\\arraybackslash}X}");
+        out.push("\\begin{tabularx}{\\textwidth}{" + coltypes.join("") + "}\n");
+        out.push(entries.join("") + "\n");
+        out.push("\\end{tabularx}\n\\flushleft")
         this._push(out.join(""));
     },
-
     // List (for enumerated lists)
     list: (array) => {
         let out = ["\\lst\n"];
@@ -279,12 +336,91 @@ const latexEngine = {
         out.push("\\stoplst");
         return out.join("");
     },
+    // Section Heading
+    section: (hd) => {
+        var out = ["\n\\section*{" + hd + "}\n"];
+        this._latex.push(out.join(""));
+    },
+    // Subsection Heading
+    subsection: (hd) => {
+        var out = ["\n\\subsection*{" + hd + "}\n"];
+        this._latex.push(out.join(""));
+    },
+    // Definition
+    definition: (def, txt) => {
+        var out = ["\\paragraph{\"" + def + "\"}{" + txt + "}\n"];
+        this._latex.push(out.join(""));
+    },
+    // Line Break
+    br: () => {
+        this.push("\\ \\linebreak\n");
+    },
+    // New Page
+    np: () => {
+        this.push("\\pagebreak\n");
+    },
+    // Plain Text
+    plain: (txt) => {
+        var out = ["\\noindent " + txt + "\n"];
+        this._latex.push(out.join(""));
+    },
+    // Indented Text
+    indent: (txt) => {
+        var out = ["\\indent" + txt + "\n"];
+        this._latex.push(out.join(""));
+    },
+    // Bold Font
+    bf: (txt) => {
+        var out = ["\\textbf{" + txt + "}\n"];
+        this._latex.push(out.join(""));
+    },
+     // Underline
+    ul: (txt) => {
+        var out = ["\\underline{" + txt + "}\n"];
+        this._latex.push(out.join(""));
+    },
+    // Paragraph Entry
+    par: (bold, txt) => {
+        this._push("\\paragraph{" + bold + "}{" + txt + "}\n");
+    },
+    // Enumerated Paragraphs (uses counter)
+    enum: (title, txt) => {
+        var out = ["\\stepcounter{clausecount}\n\\reversemarginpar",
+            "\\marginnote{\\textbf{\\theclausecount .}}[0.9cm]\\paragraph{" + title + "}\\nonfrenchspacing " + txt + "\n"
+        ];
+        this._latex.push(out.join(""));
+    },
+    // Enumerated Heading (uses counter)
+    enumHead: (title) => {
+        var out = ["\\stepcounter{artcount}\n",
+            "\\subsubsection*{\\bf ARTICLE \\theartcount\\ -\\ " + title + "}\n"
+        ];
+        this._latex.push(out.join(""));
+    },
+    // Floating Title (Right)
+    floatRightHead: (heading) => {
+        var out = ["\\hfill\\begin{minipage}{\\dimexpr\\textwidth-8cm}\n",
+            "\\parfillskip0pt\n\\parindent0pt\n\\fontdimen3\\font.25in\n",
+            "\\frenchspacing\n\\bf " + heading + "\n\\end{minipage}\\ ",
+            "\\linebreak \\ \\linebreak\\nonfrenchspacing\n"
+        ];
+        this._latex.push(out.join(""));
+    },
+    // Floating Title (Left)
+    floatLeftHead: (heading) => {
+        var out = ["\\begin{minipage}{\\dimexpr\\textwidth-8cm}\n",
+            "\\parfillskip0pt\n\\parindent0pt\n\\fontdimen3\\font.25in\n",
+            "\\frenchspacing\n\\bf " + heading + "\n\\end{minipage}\\hfill\\ ",
+            "\\linebreak \\ \\linebreak\\nonfrenchspacing\n"
+        ];
+        this._latex.push(out.join(""));
+    },
+
 
     // ---LATEX FORMATTING & STYLE FUNCTIONS---
     // =======================================>
-
     // Generate Custom Styles
-    style: (text, flags) => {
+    newStyle: (text, flags) => {
         let ltx = [];
         // Determine Colour
         flags.new ? ltx.push(this._colours.new()) : ltx.push("");
@@ -295,14 +431,14 @@ const latexEngine = {
         text = flags.cl ? this.clean(text) : text;
         text = flags.st ? this._styles.st(text) : text;
         text = flags.bf ? this._styles.bf(text) : text;
+        text = flags.it ? this._styles.it(text) : text;
         text = flags.ul ? this._styles.ul(text) : text;
         // Push and Finalize
         ltx.push(text);
         ltx.push(this._colours.text());
         return ltx.join("");
     },
-
-    // Generate Flags Object for Use
+    // Generate Flags Object for Use (defaults)
     genFlags: () => {
         return {
             new: false,
@@ -313,6 +449,104 @@ const latexEngine = {
             eq: false,
             neq: false,
         };
-    }
+    },
+    // New Style Formatting
+    styleAs: {
+        // Highlighted
+        new: (revHistory, n) => {
+            let index = n ? n : 0;
+            return this.newStyle(revHistory[index], {
+                new: true,
+                ul: true
+            });
+        },
+        // Modified Style Formatting
+        neq: (revHistory, n, m) => {
+            let ltx = [];
+            let newIndex = n ? n : 0;
+            let oldIndex = m ? m : 0;
+            ltx.push(this.newStyle(revHistory[oldIndex], {
+                old: true,
+                st: true
+            }));
+            ltx.push(this.newStyle(revHistory[newIndex], {
+                new: true,
+                ul: true,
+                cl: true
+            }));
+            return ltx.join("");
+        },
+        // Removed Style Formatting
+        old: (revHistory, n) => {
+            let index = n ? n : 0;
+            return this.newStyle(revHistory[index], {
+                old: true,
+                st: true
+            });
+        },
+        // Equal (unchanged) Formatting
+        eq: (v) => {
+            return this.newStyle(v.curr, {
+                eq: true
+            });
+        },
+        // New (cleaned)
+        newClean: (revHistory, n) => {
+            let index = n ? n : 0;
+            return this.newStyle(revHistory[index], {
+                new: true,
+                ul: true,
+                cl: true
+            });
+        },
+        // Modified (Cleaned)
+        neqClean: (revHistory, n, m) => {
+            let ltx = [];
+            let newIndex = n ? n : 0;
+            let oldIndex = m ? m : 0;
+            ltx.push(this.newStyle(revHistory[oldIndex], {
+                old: true,
+                st: true,
+                cl: true
+            }));
+            ltx.push(this.newStyle(revHistory[newIndex], {
+                new: true,
+                ul: true,
+                cl: true
+            }));
+            return ltx.join("");
+        },
+
+        // Removed (Cleaned)
+        oldClean: (revHistory, n) => {
+            let index = n ? n : 0;
+            return this.newStyle(revHistory[index], {
+                old: true,
+                st: true,
+                cl: true
+            });
+        },
+
+        // Equal (Cleaned)
+        eqClean: (revHistory, n) => {
+            let index = n ? n : 0;
+            return this.newStyle(revHistory[index], {
+                eq: true,
+                cl: true
+            });
+        }
+    },
+    // Return Styled Result
+    putRev: (revHistory, style, n, m) => {
+        if (m) {
+            return this.styleAs[style](revHistory, n, m);
+        } else {
+            return this.styleAs[style](revHistory, n);
+        }
+    },
+    // Return Styled Result from Direct Input
+    putRevD: (rev, style) => {
+        return this.styleAs[style](rev, style, 0);
+    },
 }
 module.exports = latexEngine;
