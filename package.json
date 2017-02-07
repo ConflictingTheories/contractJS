@@ -1,0 +1,40 @@
+{
+  "name": "contractjs",
+  "version": "0.1.0",
+  "description": "A javascript framework for generating pdf documents & contracts easily through its built in commands.",
+  "main": "example.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ConflictingTheories/contractJS.git"
+  },
+  "keywords": [
+    "javascript",
+    "latex",
+    "contract",
+    "pdf",
+    "framework",
+    "ltx",
+    "generator",
+    "documents"
+  ],
+  "author": "Kyle Derby MacInnis",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/ConflictingTheories/contractJS/issues"
+  },
+  "homepage": "https://github.com/ConflictingTheories/contractJS#readme",
+  "dependencies": {
+    "body-parser": "^1.16.0",
+    "cookie-parser": "^1.4.3",
+    "cors": "^2.8.1",
+    "express": "^4.14.1",
+    "express-session": "^1.15.0",
+    "fs-extra": "^2.0.0",
+    "latex-ex": "0.0.4",
+    "temp": "^0.8.3",
+    "through": "^2.3.8"
+  }
+}

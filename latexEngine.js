@@ -1,6 +1,6 @@
 // Copyright (c) 2017 - Kyle Derby MacInnis
 // Any unauthorized distribution or transfer
-// of this work is strictly prohibited.
+// of latexEngine work is strictly prohibited.
 // All Rights Reserved.
 //
 
@@ -9,17 +9,6 @@
 // AUTHOR: Kyle Derby MacInnis
 // VERSION: 0.1.0
 // DATE : FEBRUARY 7, 2017
-
-// DISCLAIMER:
-//
-// ** THIS FILE IS FOR NON-COMMERCIAL USE IN ALL FORMS ** EXCEPT THE FOLLOWING EXCEPTIONS ** 
-//
-// -- THIS FILE CAN BE USED FOR EDUCATIONAL PURPOSES - AS LONG AS SUCH EDUCATION IS PURELY INDIVIDUAL
-//
-// -- THIS FILE CAN BE EXAMINED INDIVIDUALLY - BUT CANNOT BE SHARED - DISCUSSED - OR DISTRIBUTED OPENLY OR PRIVATELY WITHOUT CONSENT FROM THE AUTHOR
-//
-// -- THIS FILE CANNOT BE USED BY ANY AFFILIATE OF PAPER INTERACTIVE INCORPORATED WITHOUT EXPLICIT PERMISSION FROM THE AUTHOR
-
 
 // DESCRIPTION:
 // Functions for Latex Document Transpiling & Compilation (PDF + DVI)
@@ -44,6 +33,8 @@ const latexEngine = {
     _pdf: [],
     // DVI Stream (Output)
     _dvi: [],
+    // Latex Stream (Output)
+    _ltx: [],
     // Export Flag for Drafting
     _export: false,
     // Watermark Text (if-any)
@@ -61,36 +52,36 @@ const latexEngine = {
     // ----------MAIN FUNCTIONS----------
     // =================================>
     // Initializes Stream + Setups Flags
-    init: (ltxStream, exportFlag, colours, graphicsPath) => {
-        this._latex = ltxStream;
-        this._export = exportFlag;
+    init: (ltxStream, exportFlag, graphicsPath, colours) => {
+        latexEngine._latex = ltxStream;
+        latexEngine._export = exportFlag;
         if (colours && colours.length) {
             let i = colours.length;
             while (i--) {
-                this.setColour(colours[i].name, colours[i].val, colours[i].type);
+                latexEngine.setColour(colours[i].name, colours[i].val, colours[i].type);
             }
         }
         // Setup System configuration
-        this._initSystemConfig(graphicsPath);
+        latexEngine._initSystemConfig(graphicsPath);
         // Setup Macros
-        this._initDefaultMacros();
+        latexEngine._initDefaultMacros();
         // Establish Styles for Use (Defaults) (extensible)
-        this._setStyle("bf", "\\textbf{", "}");
-        this._setStyle("it", "\\emph{", "}");
-        this._setStyle("ul", "\\ul{", "}");
-        this._setStyle("st", "\\st{", "}");
+        latexEngine._addStyle("bf", "\\textbf{", "}");
+        latexEngine._addStyle("it", "\\emph{", "}");
+        latexEngine._addStyle("ul", "\\ul{", "}");
+        latexEngine._addStyle("st", "\\st{", "}");
 
         // Establish colours available for use (Defaults) (Extensible)
-        this._setColour("text", "#000000", "HTML"); // Default Colour
-        this._setColour("new", "#0000AA", "HTML"); // Revision Highlighting
-        this._setColour("old", "#AA0000", "HTML"); // Revision Highlighting
-        this._setColour("eq", "#5533AA", "HTML"); // Equal
-        this._setColour("neq", "#337711", "HTML"); // Not Equal
+        latexEngine._addColour("text", "#000000", "HTML"); // Default Colour
+        latexEngine._addColour("new", "#0000AA", "HTML"); // Revision Highlighting
+        latexEngine._addColour("old", "#AA0000", "HTML"); // Revision Highlighting
+        latexEngine._addColour("eq", "#5533AA", "HTML"); // Equal
+        latexEngine._addColour("neq", "#337711", "HTML"); // Not Equal
     },
     // System Configuration
     _initSystemConfig: (graphicsPath) => {
         // Setup System
-        this._sys.push("\\batchmode\n");
+        latexEngine._sys.push("\\batchmode\n");
         // Latex Packages
         let packages = [
             "\\usepackage[english]{babel}",
@@ -114,7 +105,7 @@ const latexEngine = {
         ];
         // configuration
         let config = [
-            "\\graphicspath{" + grahicsPath + "}\n",
+            "\\graphicspath{" + graphicsPath + "}\n",
             "\\setlength{\\parskip}{0em}\n",
             "\\keepXColumns\n",
             "\\newenvironment{frcseries}{\\fontfamily{pzc}\\selectfont}{}\n",
@@ -123,7 +114,7 @@ const latexEngine = {
             "\\newcolumntype{Y}{>{\\vfill\\RaggedRight\\arraybackslash}X}\n",
             "\\newcolumntype{Z}{>{\\vfill\\centering\\arraybackslash}X}\n",
         ]
-        this._sys = this._sys.concat(packages).concat(config);
+        latexEngine._sys = latexEngine._sys.concat(packages).concat(config);
     },
     // Macro Initialization
     _initDefaultMacros: () => {
@@ -136,26 +127,30 @@ const latexEngine = {
             "\n\\newcommand\\@lstiii[2]{\\item[#1]#2\n}\n",
             "\n\\newcommand\\@lstsend[1]{\n\\end{description}\n\\xdef\\tpd{\\the\\prevdepth}\n\\end{minipage}\n}\n"
         ];
-        this._macro = this._macro.concat(macros);
+        latexEngine._macro = latexEngine._macro.concat(macros);
         // Counters
-        this._macro.push("\\newcounter{enumcount}\n");
-        this._macro.push("\\newcounter{enumheadcount}\n");
+        latexEngine._macro.push("\\newcounter{enumcount}\n");
+        latexEngine._macro.push("\\newcounter{enumheadcount}\n");
+    },
+    // Setup the watermark
+    _setWatermark: (text, colour, scale) => {
+        // TODO
     },
     // Adds in configuration for a new colour in Latex
-    _setColour: (name, val, type) => {
-        this._colours["_" + name] = {
+    _addColour: (name, val, type) => {
+        latexEngine._colours["_" + name] = {
             name: name,
             val: val,
             type: type,
             ltx: "\\colour{" + name + "}"
         };
-        this._colours[name] = () => this._colours["_" + name].ltx
+        latexEngine._colours[name] = () => latexEngine._colours["_" + name].ltx
         // Append Latex Command for New Colour to Macros
-        this._macro.push["\\definecolour{" + name + "}{" + type + "}{" + val + "}"];
+        latexEngine._macro.push["\\definecolour{" + name + "}{" + type + "}{" + val + "}"];
     },
     // Adds in configuration for a new colour in Latex
-    _setStyle: (name, pre, post) => {
-        this._styles["_" + name] = {
+    _addStyle: (name, pre, post) => {
+        latexEngine._styles["_" + name] = {
             name: name,
             pre: pre,
             post: post,
@@ -163,9 +158,17 @@ const latexEngine = {
                 return "\\" + name + "{" + text + "}"
             }
         };
-        this._styles[name] = (text) => this._styles["_" + name].ltx(text);
+        latexEngine._styles[name] = (text) => latexEngine._styles["_" + name].ltx(text);
         // Append Latex Command for New Colour to Macros
-        this._macro.push["\\def\\" + name + "<#1>{" + pre + "#1" + post + "}"];
+        latexEngine._macro.push["\\def\\" + name + "<#1>{" + pre + "#1" + post + "}"];
+    },
+    // Begin Document Entry
+    begin: () => {
+        latexEngine._latex.push("\\begin{document}");
+    },
+    // End Document Entry
+    end: () => {
+        latexEngine._latex.push("\\end{document}");
     },
 
 
@@ -174,39 +177,54 @@ const latexEngine = {
     // Generate PDF File
     toPDF: () => {
         return new Promise((resolve, reject) => {
-            let input = this._sys.concat(this._macro).concat(this._latex)
-            // Store to this._pdf & return
-            let stream = LTX(input.join(""));
-            let pdfData = [];
+            let input = latexEngine._sys.concat(latexEngine._macro).concat(latexEngine._latex)
+            // Store to latexEngine._pdf & return
             try {
-                stream.on('data', (chunk) => {
-                    pdfData.push(chunk);
-                });
-                stream.on('end', () => {
-                    this._pdf = pdfData;
-                    resolve(pdfData);
-                })
+                let stream = LTX(input.join("\n"));
+                resolve(stream);
             } catch (e) {
-                console.error(e);
                 reject(e);
             }
+
+            // let pdfData = [];
+            // try {
+            //     stream.on('data', (chunk) => {
+            //         pdfData.push(chunk);
+            //     });
+            //     stream.on('end', () => {
+            //         latexEngine._pdf = pdfData.join("");
+            //         //console.log(latexEngine._pdf);
+            //         resolve(String(latexEngine._pdf));
+            //     })
+            // } catch (e) {
+            //     console.error(e);
+            //     reject(e);
+            // }
         });
     },
     // Generate base64 Encoded PDF File
     toPDF64: () => {
         return new Promise((resolve, reject) => {
-            let input = this._sys.concat(this._macro).concat(this._latex)
-            // Store to this._pdf & return
-            let stream = LTX(input.join(""));
+            let input = latexEngine._sys.concat(latexEngine._macro).concat(latexEngine._latex)
+            // Store to latexEngine._pdf & return
+            let stream = LTX(input.join("\n"));
+            // try {
+            //     let stream = LTX(input.join("\n"));
+            //     resolve(stream);
+            // } catch (e) {
+            //     reject(e);
+            // }
             let pdfData = [];
             try {
                 stream.on('data', (chunk) => {
-                    pdfData.push(chunk.toString('base64'));
+                    console.log(chunk)
+                    //pdfData.push(chunk.toString("base64"));
+                    pdfData.push(chunk);
                 });
                 stream.on('end', () => {
-                    this._pdf = pdfData;
+                    latexEngine._pdf = pdfData.join("");
                     resolve(pdfData);
-                })
+                });
             } catch (e) {
                 console.error(e);
                 reject(e);
@@ -215,72 +233,86 @@ const latexEngine = {
     },
     // Generate DVI File
     toDVI: () => {
-        // Store to this._dvi & return
+        // Store to latexEngine._dvi & return
         return new Promise((resolve, reject) => {
-            let input = this._sys.concat(this._macro).concat(this._latex)
-            // Store to this._pdf & return
-            let stream = LTX(input.join(""), {
-                format: 'dvi'
-            });
-            let pdfData = [];
+            let input = latexEngine._sys.concat(latexEngine._macro).concat(latexEngine._latex)
+            // Store to latexEngine._pdf & return
             try {
-                stream.on('data', (chunk) => {
-                    pdfData.push(chunk);
+                let stream = LTX(input.join("\n"), {
+                    format: 'dvi'
                 });
-                stream.on('end', () => {
-                    this._pdf = pdfData;
-                    resolve(pdfData);
-                })
+                resolve(stream);
             } catch (e) {
-                console.error(e);
                 reject(e);
             }
+            // let pdfData = [];
+            // try {
+            //     stream.on('data', (chunk) => {
+            //         pdfData.push(chunk);
+            //     });
+            //     stream.on('end', () => {
+            //         latexEngine._dvi = pdfData;
+            //         resolve(pdfData);
+            //     })
+            // } catch (e) {
+            //     console.error(e);
+            //     reject(e);
+            // }
         });
     },
     // Generate Latex File
     toLTX: () => {
-        let output = this._sys.concat(this._macro).concat(this._latex)
-        return Promise.resolve(output.join(""));
+        let output = latexEngine._sys.concat(latexEngine._macro).concat(latexEngine._latex)
+        latexEngine._ltx = output.join("\n");
+        return Promise.resolve(output.join("\n"));
     },
-
+    getPDF: () => {
+        return String(latexEngine._pdf);
+    },
+    getDVI: () => {
+        return String(latexEngine._dvi);
+    },
+    getLTX: () => {
+        return String(latexEngine._ltx);
+    },
     // -----STREAM BASED UTILITIES-----
     // ===============================>
     // Push Raw Text into Stream
     push: (item) => {
-        this._latex.push(item);
+        latexEngine._latex.push(item);
     },
     // Push If
     pushIf: (condition, item) => {
         let itm = condition ? item : "";
-        this._latex.push(itm);
+        latexEngine._latex.push(itm);
     },
     // Push If/Else
     pushIfElse: (condition, item, otheritem) => {
         let itm = condition ? item : otheritem;
-        this._latex.push(itm);
+        latexEngine._latex.push(itm);
     },
     // Push Clean Text into Stream
     cpush: (item) => {
-        this._latex.push(this.clean(item));
+        latexEngine._latex.push(latexEngine.clean(item));
     },
     // Clean & Push If
     cpushIf: (condition, item) => {
         let itm = condition ? item : "";
-        this._latex.push(this.clean(itm));
+        latexEngine._latex.push(latexEngine.clean(itm));
     },
     // Push & Clean If/Else
     cpushIfElse: (condition, item, otherItem) => {
         let itm = condition ? item : otheritem;
-        this._latex.push(this.clean(itm));
+        latexEngine._latex.push(latexEngine.clean(itm));
     },
     // Pop Raw Text from Stream
     pop: () => {
-        return this._latex.pop();
+        return latexEngine._latex.pop();
     },
     // Pop If
     popIf: (test) => {
         if (test) {
-            return this._latex.pop();
+            return latexEngine._latex.pop();
         }
     },
 
@@ -330,14 +362,14 @@ const latexEngine = {
     //  Put
     cputIf: (condition, t_str) => {
         return condition ?
-            this.clean(t_str) :
+            latexEngine.clean(t_str) :
             "";
     },
     // If/Else
     cputIfElse: (condition, t_str, f_str) => {
         return condition ?
-            this.clean(t_str) :
-            this.clean(f_str);
+            latexEngine.clean(t_str) :
+            latexEngine.clean(f_str);
     },
 
 
@@ -366,7 +398,7 @@ const latexEngine = {
         out.push("\\begin{tabularx}{\\textwidth}{" + coltypes.join("") + "}\n");
         out.push(entries.join("") + "\n");
         out.push("\\end{tabularx}\n\\flushleft")
-        this._push(out.join(""));
+        latexEngine._push(out.join(""));
     },
     // List (for enumerated lists)
     list: (array) => {
@@ -380,63 +412,63 @@ const latexEngine = {
     // Section Heading
     section: (hd) => {
         var out = ["\n\\section*{" + hd + "}\n"];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Subsection Heading
     subsection: (hd) => {
         var out = ["\n\\subsection*{" + hd + "}\n"];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Definition
     definition: (def, txt) => {
         var out = ["\\paragraph{\"" + def + "\"}{" + txt + "}\n"];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Line Break
     br: () => {
-        this.push("\\ \\linebreak\n");
+        latexEngine.push("\\ \\linebreak\n");
     },
     // New Page
     np: () => {
-        this.push("\\pagebreak\n");
+        latexEngine.push("\\pagebreak\n");
     },
     // Plain Text
     plain: (txt) => {
         var out = ["\\noindent " + txt + "\n"];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Indented Text
     indent: (txt) => {
         var out = ["\\indent" + txt + "\n"];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Bold Font
     bf: (txt) => {
         var out = ["\\textbf{" + txt + "}\n"];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Underline
     ul: (txt) => {
         var out = ["\\underline{" + txt + "}\n"];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Paragraph Entry
     par: (bold, txt) => {
-        this._push("\\paragraph{" + bold + "}{" + txt + "}\n");
+        latexEngine._push("\\paragraph{" + bold + "}{" + txt + "}\n");
     },
     // Enumerated Paragraphs (uses counter)
     enum: (title, txt) => {
         var out = ["\\stepcounter{enumcount}\n\\reversemarginpar",
             "\\marginnote{\\textbf{\\theenumcount .}}[0.9cm]\\paragraph{" + title + "}\\nonfrenchspacing " + txt + "\n"
         ];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Enumerated Heading (uses counter)
     enumHead: (title) => {
         var out = ["\\stepcounter{enumheadcount}\n",
             "\\subsubsection*{\\bf ARTICLE \\theenumheadcount\\ -\\ " + title + "}\n"
         ];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Floating Title (Right)
     floatRightHead: (heading) => {
@@ -445,7 +477,7 @@ const latexEngine = {
             "\\frenchspacing\n\\bf " + heading + "\n\\end{minipage}\\ ",
             "\\linebreak \\ \\linebreak\\nonfrenchspacing\n"
         ];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
     // Floating Title (Left)
     floatLeftHead: (heading) => {
@@ -454,7 +486,7 @@ const latexEngine = {
             "\\frenchspacing\n\\bf " + heading + "\n\\end{minipage}\\hfill\\ ",
             "\\linebreak \\ \\linebreak\\nonfrenchspacing\n"
         ];
-        this._latex.push(out.join(""));
+        latexEngine._latex.push(out.join(""));
     },
 
 
@@ -464,19 +496,19 @@ const latexEngine = {
     newStyle: (text, flags) => {
         let ltx = [];
         // Determine Colour
-        flags.new ? ltx.push(this._colours.new()) : ltx.push("");
-        flags.old ? ltx.push(this._colours.old()) : ltx.push("");
-        flags.eq ? ltx.push(this._colours.eq()) : ltx.push("");
-        flags.neq ? ltx.push(this._colours.neq()) : ltx.push("");
+        flags.new ? ltx.push(latexEngine._colours.new()) : ltx.push("");
+        flags.old ? ltx.push(latexEngine._colours.old()) : ltx.push("");
+        flags.eq ? ltx.push(latexEngine._colours.eq()) : ltx.push("");
+        flags.neq ? ltx.push(latexEngine._colours.neq()) : ltx.push("");
         // Apply Formatting
-        text = flags.cl ? this.clean(text) : text;
-        text = flags.st ? this._styles.st(text) : text;
-        text = flags.bf ? this._styles.bf(text) : text;
-        text = flags.it ? this._styles.it(text) : text;
-        text = flags.ul ? this._styles.ul(text) : text;
+        text = flags.cl ? latexEngine.clean(text) : text;
+        text = flags.st ? latexEngine._styles.st(text) : text;
+        text = flags.bf ? latexEngine._styles.bf(text) : text;
+        text = flags.it ? latexEngine._styles.it(text) : text;
+        text = flags.ul ? latexEngine._styles.ul(text) : text;
         // Push and Finalize
         ltx.push(text);
-        ltx.push(this._colours.text());
+        ltx.push(latexEngine._colours.text());
         return ltx.join("");
     },
     // Generate Flags Object for Use (defaults)
@@ -496,7 +528,7 @@ const latexEngine = {
         // Highlighted
         new: (revHistory, n) => {
             let index = n ? n : 0;
-            return this.newStyle(revHistory[index], {
+            return latexEngine.newStyle(revHistory[index], {
                 new: true,
                 ul: true
             });
@@ -506,11 +538,11 @@ const latexEngine = {
             let ltx = [];
             let newIndex = n ? n : 0;
             let oldIndex = m ? m : 0;
-            ltx.push(this.newStyle(revHistory[oldIndex], {
+            ltx.push(latexEngine.newStyle(revHistory[oldIndex], {
                 old: true,
                 st: true
             }));
-            ltx.push(this.newStyle(revHistory[newIndex], {
+            ltx.push(latexEngine.newStyle(revHistory[newIndex], {
                 new: true,
                 ul: true,
                 cl: true
@@ -520,21 +552,21 @@ const latexEngine = {
         // Removed Style Formatting
         old: (revHistory, n) => {
             let index = n ? n : 0;
-            return this.newStyle(revHistory[index], {
+            return latexEngine.newStyle(revHistory[index], {
                 old: true,
                 st: true
             });
         },
         // Equal (unchanged) Formatting
         eq: (v) => {
-            return this.newStyle(v.curr, {
+            return latexEngine.newStyle(v.curr, {
                 eq: true
             });
         },
         // New (cleaned)
         newClean: (revHistory, n) => {
             let index = n ? n : 0;
-            return this.newStyle(revHistory[index], {
+            return latexEngine.newStyle(revHistory[index], {
                 new: true,
                 ul: true,
                 cl: true
@@ -545,12 +577,12 @@ const latexEngine = {
             let ltx = [];
             let newIndex = n ? n : 0;
             let oldIndex = m ? m : 0;
-            ltx.push(this.newStyle(revHistory[oldIndex], {
+            ltx.push(latexEngine.newStyle(revHistory[oldIndex], {
                 old: true,
                 st: true,
                 cl: true
             }));
-            ltx.push(this.newStyle(revHistory[newIndex], {
+            ltx.push(latexEngine.newStyle(revHistory[newIndex], {
                 new: true,
                 ul: true,
                 cl: true
@@ -561,7 +593,7 @@ const latexEngine = {
         // Removed (Cleaned)
         oldClean: (revHistory, n) => {
             let index = n ? n : 0;
-            return this.newStyle(revHistory[index], {
+            return latexEngine.newStyle(revHistory[index], {
                 old: true,
                 st: true,
                 cl: true
@@ -571,7 +603,7 @@ const latexEngine = {
         // Equal (Cleaned)
         eqClean: (revHistory, n) => {
             let index = n ? n : 0;
-            return this.newStyle(revHistory[index], {
+            return latexEngine.newStyle(revHistory[index], {
                 eq: true,
                 cl: true
             });
@@ -580,14 +612,14 @@ const latexEngine = {
     // Return Styled Result
     putRev: (revHistory, style, n, m) => {
         if (m) {
-            return this.styleAs[style](revHistory, n, m);
+            return latexEngine.styleAs[style](revHistory, n, m);
         } else {
-            return this.styleAs[style](revHistory, n);
+            return latexEngine.styleAs[style](revHistory, n);
         }
     },
     // Return Styled Result from Direct Input
     putRevD: (rev, style) => {
-        return this.styleAs[style](rev, style, 0);
+        return latexEngine.styleAs[style](rev, style, 0);
     },
 }
 module.exports = latexEngine;
