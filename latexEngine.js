@@ -61,7 +61,7 @@ const latexEngine = {
     // ----------MAIN FUNCTIONS----------
     // =================================>
     // Initializes Stream + Setups Flags
-    init: (ltxStream, exportFlag, colours) => {
+    init: (ltxStream, exportFlag, colours, graphicsPath) => {
         this._latex = ltxStream;
         this._export = exportFlag;
         if (colours && colours.length) {
@@ -71,10 +71,9 @@ const latexEngine = {
             }
         }
         // Setup System configuration
-        this._initSystemConfig();
+        this._initSystemConfig(graphicsPath);
         // Setup Macros
         this._initDefaultMacros();
-
         // Establish Styles for Use (Defaults) (extensible)
         this._setStyle("bf", "\\textbf{", "}");
         this._setStyle("it", "\\emph{", "}");
@@ -89,13 +88,58 @@ const latexEngine = {
         this._setColour("neq", "#337711", "HTML"); // Not Equal
     },
     // System Configuration
-    _initSystemConfig: () => {
+    _initSystemConfig: (graphicsPath) => {
         // Setup System
         this._sys.push("\\batchmode\n");
+        // Latex Packages
+        let packages = [
+            "\\usepackage[english]{babel}",
+            "\\usepackage[utf8]{inputenc}",
+            "\\usepackage{color, colortbl}",
+            "\\usepackage[letterpaper, margin=1in]{geometry}",
+            "\\usepackage{marginnote}",
+            "\\usepackage{parskip}",
+            "\\usepackage{multicol}",
+            "\\usepackage{tabularx}",
+            "\\usepackage{ltablex}",
+            "\\usepackage{papersign}",
+            "\\usepackage{booktabs}",
+            "\\usepackage{ragged2e}",
+            "\\usepackage{ifmtarg}",
+            "\\usepackage{etoolbox}",
+            "\\usepackage{graphicx}",
+            "\\usepackage{xcolor}",
+            "\\usepackage{soul}",
+            "\\usepackage{ifthen}"
+        ];
+        // configuration
+        let config = [
+            "\\graphicspath{" + grahicsPath + "}\n",
+            "\\setlength{\\parskip}{0em}\n",
+            "\\keepXColumns\n",
+            "\\newenvironment{frcseries}{\\fontfamily{pzc}\\selectfont}{}\n",
+            "\\newcommand{\\textcur}[1]{{\\itshape\\frcseries#1}}\n",
+            "\\newcolumntype{g}{>{\\vfill\\centering}X}\n",
+            "\\newcolumntype{Y}{>{\\vfill\\RaggedRight\\arraybackslash}X}\n",
+            "\\newcolumntype{Z}{>{\\vfill\\centering\\arraybackslash}X}\n",
+        ]
+        this._sys = this._sys.concat(packages).concat(config);
     },
     // Macro Initialization
     _initDefaultMacros: () => {
         // Setup Macros
+        let macros = [
+            // Necessary Listing Macros
+            "\n\\newcommand{\\lst}{\n\\paragraph{ }\n\\hfill\\begin{minipage}{\\dimexpr\\textwidth-1cm}\n\\begin{description}\n\\setlength\\itemsep{1em}\n\\@lsti\n}\n",
+            "\n\\newcommand\\@lsti{\n\\@ifnextchar\\stoplst{\\@lstsend}{\\@lstii}}\n",
+            "\n\\newcommand\\@lstii[2]{\n\\@lstiii{#1}{#2}\\hfill\n\\@lsti\n}\n",
+            "\n\\newcommand\\@lstiii[2]{\\item[#1]#2\n}\n",
+            "\n\\newcommand\\@lstsend[1]{\n\\end{description}\n\\xdef\\tpd{\\the\\prevdepth}\n\\end{minipage}\n}\n"
+        ];
+        this._macro = this._macro.concat(macros);
+        // Counters
+        this._macro.push("\\newcounter{enumcount}\n");
+        this._macro.push("\\newcounter{enumheadcount}\n");
     },
     // Adds in configuration for a new colour in Latex
     _setColour: (name, val, type) => {
@@ -319,9 +363,6 @@ const latexEngine = {
             }
         }
         let out = [];
-        out.push("\\newcolumntype{g}{>{\\vfill\\centering}X}~\n");
-        out.push("\\newcolumntype{Y}{>{\\vfill\\RaggedRight\\arraybackslash}X}~\n");
-        out.push("\\newcolumntype{Z}{>{\\vfill\\centering\\arraybackslash}X}");
         out.push("\\begin{tabularx}{\\textwidth}{" + coltypes.join("") + "}\n");
         out.push(entries.join("") + "\n");
         out.push("\\end{tabularx}\n\\flushleft")
@@ -374,7 +415,7 @@ const latexEngine = {
         var out = ["\\textbf{" + txt + "}\n"];
         this._latex.push(out.join(""));
     },
-     // Underline
+    // Underline
     ul: (txt) => {
         var out = ["\\underline{" + txt + "}\n"];
         this._latex.push(out.join(""));
@@ -385,15 +426,15 @@ const latexEngine = {
     },
     // Enumerated Paragraphs (uses counter)
     enum: (title, txt) => {
-        var out = ["\\stepcounter{clausecount}\n\\reversemarginpar",
-            "\\marginnote{\\textbf{\\theclausecount .}}[0.9cm]\\paragraph{" + title + "}\\nonfrenchspacing " + txt + "\n"
+        var out = ["\\stepcounter{enumcount}\n\\reversemarginpar",
+            "\\marginnote{\\textbf{\\theenumcount .}}[0.9cm]\\paragraph{" + title + "}\\nonfrenchspacing " + txt + "\n"
         ];
         this._latex.push(out.join(""));
     },
     // Enumerated Heading (uses counter)
     enumHead: (title) => {
-        var out = ["\\stepcounter{artcount}\n",
-            "\\subsubsection*{\\bf ARTICLE \\theartcount\\ -\\ " + title + "}\n"
+        var out = ["\\stepcounter{enumheadcount}\n",
+            "\\subsubsection*{\\bf ARTICLE \\theenumheadcount\\ -\\ " + title + "}\n"
         ];
         this._latex.push(out.join(""));
     },
