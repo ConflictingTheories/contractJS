@@ -85,7 +85,7 @@ const latexEngine = {
         // Latex Packages
         let packages = [
             "\\usepackage[english]{babel}",
-            "\\usepackage[utf8]{inputenc}",
+            //"\\usepackage[utf8]{inputenc}",
             "\\usepackage{color, colortbl}",
             "\\usepackage[letterpaper, margin=1in]{geometry}",
             "\\usepackage{marginnote}",
@@ -218,12 +218,14 @@ const latexEngine = {
             try {
                 stream.on('data', (chunk) => {
                     console.log(chunk)
-                    //pdfData.push(chunk.toString("base64"));
-                    pdfData.push(chunk);
+                    //pdfData += chunk;
+                    pdfData.push(chunk.toString("ascii"));
+                    //pdfData.push(chunk);
                 });
                 stream.on('end', () => {
                     latexEngine._pdf = pdfData.join("");
-                    resolve(pdfData);
+                    //latexEngine._pdf = pdfData.join("");
+                    resolve(latexEngine.getPDF());
                 });
             } catch (e) {
                 console.error(e);

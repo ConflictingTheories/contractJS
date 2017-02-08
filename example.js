@@ -85,9 +85,22 @@ app.use("/pdf64", function (req, res, next) {
     ltxGen.end();
     ltxGen.toPDF64()
         .then((pdf64) => {
-            //res.contentType('application/pdf');
-            // res.send(Buffer.from(pdf64.join(""),"latin1").toString("binary"));
-            res.send(ltxGen.getPDF());
+            res.contentType('application/pdf');
+            //res.send(pdf64.join(""))
+            // res.send(Buffer.from(pdf64.join(""),"utf-8"));
+            // mail.attachments = new Array();
+            // mail.attachments.push({
+            //     content: attachment,
+            //     type: "application/pdf",
+            //     filename: "agreement.pdf",
+            //     //disposition: "attachment"
+            // });
+            res.writeHead(200, {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': 'attachment; filename=myDoc.pdf',
+                'Content-Length': ltxGen._pdf.length
+            });
+            res.end(ltxGen._pdf);
             //pdf64.pipe(res);
         })
         .catch((err) => console.error(err));
