@@ -32,10 +32,11 @@ app.use(bp.urlencoded({
 app.use("/ltx", function (req, res, next) {
     console.log('Sending PDF File');
     let myStream = [""];
-    ltxGen.init(myStream, true, __dirname);
+    ltxGen.init(undefined, false, __dirname);
     ltxGen.begin();
-    ltxGen.plain("Hello World!")
-    ltxGen.subsection('HELLO WORLD!');
+    ltxGen.floatRightHead('YO')
+    // ltxGen.section('Howdy');
+    // ltxGen.subsection('HELLO WORLD!');
     ltxGen.end();
     ltxGen.toLTX();
     res.contentType("text/plain");
@@ -46,10 +47,11 @@ app.use("/ltx", function (req, res, next) {
 app.use("/dvi", function (req, res, next) {
     console.log('Sending PDF File');
     let myStream = [""];
-    ltxGen.init(myStream, true, __dirname);
+    ltxGen.init(undefined, false, __dirname);
     ltxGen.begin();
-    ltxGen.plain("Hello World!")
-    ltxGen.subsection('HELLO WORLD!');
+    ltxGen.floatRightHead('YO')
+    // ltxGen.section('Howdy');
+    // ltxGen.subsection('HELLO WORLD!');
     ltxGen.end();
     ltxGen.toDVI()
         .then((dvi) => {
@@ -62,10 +64,11 @@ app.use("/dvi", function (req, res, next) {
 app.use("/pdf", function (req, res, next) {
     console.log('Sending PDF File');
     let myStream = [""];
-    ltxGen.init(myStream, true, __dirname);
+    ltxGen.init(undefined, false, __dirname);
     ltxGen.begin();
-    ltxGen.plain("Hello World!")
-    ltxGen.subsection('HELLO WORLD!');
+    ltxGen.floatRightHead('YO')
+    // ltxGen.section('Howdy');
+    // ltxGen.subsection('HELLO WORLD!');
     ltxGen.end();
     ltxGen.toPDF()
         .then((pdf) => {
@@ -78,15 +81,17 @@ app.use("/pdf", function (req, res, next) {
 app.use("/pdf64", function (req, res, next) {
     console.log('Sending PDF File');
     let myStream = [""];
-    ltxGen.init(myStream, true, __dirname);
+    ltxGen.init(undefined, false, __dirname);
     ltxGen.begin();
-    ltxGen.plain("Hello World!")
-    ltxGen.subsection('HELLO WORLD!');
+    ltxGen.floatRightHead('YO')
+    // ltxGen.section('Howdy');
+    // ltxGen.subsection('HELLO WORLD!');
     ltxGen.end();
     ltxGen.toPDF64()
         .then((pdf64) => {
             res.contentType('application/pdf');
-            //res.send(pdf64.join(""))
+            pdf64.pipe(res);
+            // res.send(pdf64.join(""))
             // res.send(Buffer.from(pdf64.join(""),"utf-8"));
             // mail.attachments = new Array();
             // mail.attachments.push({
@@ -95,13 +100,13 @@ app.use("/pdf64", function (req, res, next) {
             //     filename: "agreement.pdf",
             //     //disposition: "attachment"
             // });
-            res.writeHead(200, {
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': 'attachment; filename=myDoc.pdf',
-                'Content-Length': ltxGen._pdf.length
-            });
-            res.end(ltxGen._pdf);
-            //pdf64.pipe(res);
+            // res.writeHead(200, {
+            //     'Content-Type': 'application/pdf',
+            //     'Content-Disposition': 'attachment; filename=myDoc.pdf',
+            //     'Content-Length': ltxGen._pdf.length
+            // });
+            // res.end(ltxGen._pdf);
+            // pdf64.pipe(res);
         })
         .catch((err) => console.error(err));
 });
