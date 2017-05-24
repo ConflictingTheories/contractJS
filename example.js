@@ -35,26 +35,30 @@ app.use("/ltx", function (req, res, next) {
     ltxGen.init(undefined, false, __dirname);
     ltxGen.begin();
     ltxGen.floatRightHead('YO')
-    // ltxGen.section('Howdy');
-    // ltxGen.subsection('HELLO WORLD!');
+    ltxGen.section('Howdy');
+    ltxGen.subsection('HELLO WORLD!');
     ltxGen.end();
-    ltxGen.toLTX();
-    res.contentType("text/plain");
-    res.send(ltxGen.getLTX());
+    ltxGen.toLTX()
+        .then((ltx) => {
+            res.contentType("text/plain");
+            res.end(ltx);
+        })
+        .catch((err) => console.error(err));
 });
 
 // DVI OUTPUT
 app.use("/dvi", function (req, res, next) {
     console.log('Sending PDF File');
     let myStream = [""];
-    ltxGen.init(undefined, false, __dirname);
+    ltxGen.init(myStream, false, __dirname);
     ltxGen.begin();
     ltxGen.floatRightHead('YO')
-    // ltxGen.section('Howdy');
-    // ltxGen.subsection('HELLO WORLD!');
+    ltxGen.section('Howdy');
+    ltxGen.subsection('HELLO WORLD!');
     ltxGen.end();
     ltxGen.toDVI()
         .then((dvi) => {
+            res.contentType('application/dvi')
             dvi.pipe(res);
         })
         .catch((err) => console.error(err));
@@ -64,14 +68,16 @@ app.use("/dvi", function (req, res, next) {
 app.use("/pdf", function (req, res, next) {
     console.log('Sending PDF File');
     let myStream = [""];
-    ltxGen.init(undefined, false, __dirname);
+    ltxGen.init(myStream, false, __dirname);
     ltxGen.begin();
     ltxGen.floatRightHead('YO')
-    // ltxGen.section('Howdy');
-    // ltxGen.subsection('HELLO WORLD!');
+    ltxGen.section('Howdy');
+    ltxGen.subsection('HELLO WORLD!');
     ltxGen.end();
     ltxGen.toPDF()
         .then((pdf) => {
+            res.contentType('application/pdf');
+            console.log(pdf)
             pdf.pipe(res);
         })
         .catch((err) => console.error(err));
@@ -81,11 +87,11 @@ app.use("/pdf", function (req, res, next) {
 app.use("/pdf64", function (req, res, next) {
     console.log('Sending PDF File');
     let myStream = [""];
-    ltxGen.init(undefined, false, __dirname);
+    ltxGen.init(myStream, false, __dirname);
     ltxGen.begin();
     ltxGen.floatRightHead('YO')
-    // ltxGen.section('Howdy');
-    // ltxGen.subsection('HELLO WORLD!');
+    ltxGen.section('Howdy');
+    ltxGen.subsection('HELLO WORLD!');
     ltxGen.end();
     ltxGen.toPDF64()
         .then((pdf64) => {

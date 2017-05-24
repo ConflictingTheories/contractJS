@@ -19,7 +19,7 @@ const LTX = require('latex-ex'); // For Compiling into PDF (Requires TexLive)
 const toolLib = require('./library.js');
 
 // Main Object for Export
-const latexEngine = (function latexEngine() {
+const latexEngine = (function latexEng() {
 
     // -------FLAGS AND STORAGE-------
     // ================================>
@@ -55,11 +55,11 @@ const latexEngine = (function latexEngine() {
     // System Configuration
     function _initSystemConfig(graphicsPath) {
         // Setup System
-        this._sys.push("\\batchmode\n");
+        this._sys.push("\\batchmode\n\\documentclass{article}\n");
         // Latex Packages
         this._packages = [
             "\\usepackage[english]{babel}",
-            //"\\usepackage[utf8]{inputenc}",
+            "\\usepackage[utf8]{inputenc}",
             "\\usepackage{color, colortbl}",
             "\\usepackage[letterpaper, margin=1in]{geometry}",
             "\\usepackage{marginnote}",
@@ -95,11 +95,13 @@ const latexEngine = (function latexEngine() {
         // Setup Macros
         let macros = [
             // Necessary Listing Macros
+            "\n\\makeatletter",
             "\n\\newcommand{\\lst}{\n\\paragraph{ }\n\\hfill\\begin{minipage}{\\dimexpr\\textwidth-1cm}\n\\begin{description}\n\\setlength\\itemsep{1em}\n\\@lsti\n}\n",
             "\n\\newcommand\\@lsti{\n\\@ifnextchar\\stoplst{\\@lstsend}{\\@lstii}}\n",
             "\n\\newcommand\\@lstii[2]{\n\\@lstiii{#1}{#2}\\hfill\n\\@lsti\n}\n",
             "\n\\newcommand\\@lstiii[2]{\\item[#1]#2\n}\n",
-            "\n\\newcommand\\@lstsend[1]{\n\\end{description}\n\\xdef\\tpd{\\the\\prevdepth}\n\\end{minipage}\n}\n"
+            "\n\\newcommand\\@lstsend[1]{\n\\end{description}\n\\xdef\\tpd{\\the\\prevdepth}\n\\end{minipage}\n}\n",
+            "\n\\makeatother"
         ];
         this._macro = this._macro.concat(macros);
         // Counters
@@ -166,7 +168,7 @@ const latexEngine = (function latexEngine() {
 
     function begin() {
         push("\\begin{document}");
-    }
+    }   
 
     function end() {
         push("\\end{document}");
@@ -174,11 +176,11 @@ const latexEngine = (function latexEngine() {
 
     function toPDF() {
         return new Promise((resolve, reject) => {
-            let input = latexEngine._sys.concat(latexEngine._macro).concat(latexEngine._latex)
+            let input = this._sys.concat(this._macro).concat(this._latex)
             // Store to this._pdf & return
             try {
                 let stream = LTX(input.join("\n"));
-                latexEngine._pdf = stream;
+                this._pdf = stream;
                 resolve(stream);
             } catch (e) {
                 reject(e);
@@ -608,21 +610,21 @@ const latexEngine = (function latexEngine() {
     return {
         // ----------PROPERTIES--------------
         // =================================>
-        _latex: [],
-        _export: false,
-        _packages: [],
-        _macro: [],
-        _sys: [],
-        _pdf: [],
-        _pdf64: [],
-        _dvi: [],
-        _ltx: [],
-        _config: [],
-        _styles: [],
-        _colours: [],
-        _files: [],
-        _images: [],
-        _watermark: [],
+        _latex: this._latex,
+        _export: this._export,
+        _packages: this._packages,
+        _macro: this._macro,
+        _sys: this._sys,
+        _pdf: this._pdf,
+        _pdf64: this._pdf64,
+        _dvi: this._dvi,
+        _ltx: this._ltx,
+        _config: this._config,
+        _styles: this._styles,
+        _colours: this._colours,
+        _files: this._files,
+        _images: this._images,
+        _watermark: this._watermark,
         // ----------MAIN FUNCTIONS----------
         // =================================>
         // Initializes Stream + Setups Flags
@@ -634,40 +636,40 @@ const latexEngine = (function latexEngine() {
         // ---- FILE COMMAND UTILITIES ----
         // ================================>
         // Generate PDF File
-        toPDF: toPDF,
+        toPDF: () => toPDF.apply(this),
         // Generate base64 Encoded PDF File
-        toPDF64: toPDF64,
+        toPDF64: () => toPDF64.apply(this),
         // Generate DVI File
-        toDVI: toDVI,
+        toDVI: () => toDVI.apply(this),
         // Generate Latex File
-        toLTX: toLTX,
+        toLTX: () => toLTX.apply(this),
         // Get PDF Chunk Data
-        getPDF: getPDF,
+        getPDF: () => getPDF.apply(this),
         // Get PDF Stream for DVI
-        getPDFStream: getPDFStream,
+        getPDFStream: () => getPDFStream.apply(this),
         // Get Stream Object for DVI
-        getDVIStream: getDVIStream,
+        getDVIStream: () => getDVIStream.apply(this),
         // Get DVI Data
-        getDVI: getDVI,
-        getLTX: getLTX,
+        getDVI: () => getDVI.apply(this),
+        getLTX: () => getLTX.apply(this),
         // -----STREAM BASED UTILITIES-----
         // ===============================>
         // Push Raw Text into Stream
-        push: push,
+        push: (it) => push.apply(this, [it]),
         // Push If
-        pushIf: pushIf,
+        pushIf: (cd, it) => pushIf.apply(this, [cd, it]),
         // Push If/Else
-        pushIfElse: pushIfElse,
+        pushIfElse: (cd, it, ot) => pushIfElse.apply(this, [cd, it, ot]),
         // Push Clean Text into Stream
-        cpush: cpush,
+        cpush: (it) => cpush.apply(this, [it]),
         // Clean & Push If
-        cpushIf: cpushIf,
+        cpushIf: (cd, it) => cpushIf.apply(this, [cd, it]),
         // Push & Clean If/Else
-        cpushIfElse: cpushIfElse,
+        cpushIfElse: (cd, it, ot) => cpushIfElse.apply(this, [cd, it, ot]),
         // Pop Raw Text from Stream
-        pop: pop,
+        pop: () => pop.apply(this),
         // Pop If
-        popIf: popIf,
+        popIf: (cd) => popIf.apply(this),
         // ----- TEXT BASED UTILITIES ------
         // =================================>
         // Cleans Input of all Latex Special Characters
@@ -689,11 +691,11 @@ const latexEngine = (function latexEngine() {
         // List (for enumerated lists)
         list: list,
         // Section Heading
-        section: section,
+        section: (hd) => section.apply(this, [hd]),
         // Subsection Heading
-        subsection: subsection,
+        subsection: (hd) => subsection.apply(this, [hd]),
         // Definition
-        definition: definition,
+        definition: (df, txt) => definition.apply(this, [df, txt]),
         // Line Break
         br: br,
         // New Page
@@ -713,9 +715,9 @@ const latexEngine = (function latexEngine() {
         // Enumerated Heading (uses counter)
         enumHead: enumHead,
         // Floating Title (Right)
-        floatRightHead: floatRightHead,
+        floatRightHead: (hd) => floatRightHead.apply(this, [hd]),
         // Floating Title (Left)
-        floatLeftHead: floatLeftHead,
+        floatLeftHead: (hd) => floatLeftHead.apply(this, [hd]),
         // ---LATEX FORMATTING & STYLE FUNCTIONS---
         // =======================================>
         // Generate Custom Styles
