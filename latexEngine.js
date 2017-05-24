@@ -168,7 +168,7 @@ const latexEngine = (function latexEng() {
 
     function begin() {
         push("\\begin{document}");
-    }   
+    }
 
     function end() {
         push("\\end{document}");
@@ -628,11 +628,11 @@ const latexEngine = (function latexEng() {
         // ----------MAIN FUNCTIONS----------
         // =================================>
         // Initializes Stream + Setups Flags
-        init: init,
+        init: (ltx, ep, gp, cl) => init.apply(this, [ltx, ep, gp, cl]),
         // Begin Document Entry
-        begin: begin,
+        begin: () => begin.apply(this),
         // End Document Entry
-        end: end,
+        end: () => end.apply(this),
         // ---- FILE COMMAND UTILITIES ----
         // ================================>
         // Generate PDF File
@@ -645,7 +645,7 @@ const latexEngine = (function latexEng() {
         toLTX: () => toLTX.apply(this),
         // Get PDF Chunk Data
         getPDF: () => getPDF.apply(this),
-        // Get PDF Stream for DVI
+        // Get PDF Stream
         getPDFStream: () => getPDFStream.apply(this),
         // Get Stream Object for DVI
         getDVIStream: () => getDVIStream.apply(this),
@@ -673,23 +673,23 @@ const latexEngine = (function latexEng() {
         // ----- TEXT BASED UTILITIES ------
         // =================================>
         // Cleans Input of all Latex Special Characters
-        clean: clean,
+        clean: (str) => clean.apply(this, [str]),
         // Returns comparison between two variables
-        compare: compare,
+        compare: (one, two) => compare.apply(this, [one, two]),
         // Conditional Put
-        putIf: putIf,
+        putIf: (cnd, str) => putIf.apply(this, [cnd, str]),
         // If/Else
-        putIfElse: putIfElse,
+        putIfElse: (cnd, str, stro) => putIfElse.apply(this, [cnd, str, stro]),
         //  Put
-        cputIf: cputIf,
+        cputIf: (cnd, str) => cputIf.apply(this, [cnd, str]),
         // If/Else
-        cputIfElse: cputIfElse,
+        cputIfElse: (cnd, str, stro) => cputIfElse.apply(this, [cnd, str, stro]),
         // ----- STRUCTURES & DOCUMENT TEMPLATES ------
         // ===========================================>
         // Generate a Dynamic Table
-        table: table,
+        table: (col, arr) => table.apply(this, [col, arr]),
         // List (for enumerated lists)
-        list: list,
+        list: (arr) => list.apply(this, [arr]),
         // Section Heading
         section: (hd) => section.apply(this, [hd]),
         // Subsection Heading
@@ -697,23 +697,23 @@ const latexEngine = (function latexEng() {
         // Definition
         definition: (df, txt) => definition.apply(this, [df, txt]),
         // Line Break
-        br: br,
+        br: () => br.apply(this),
         // New Page
-        np: np,
+        np: () => np.apply(this),
         // Plain Text
-        plain: plain,
+        plain: (txt) => plain.apply(this, [txt]),
         // Indented Text
-        indent: indent,
+        indent: () => indent.apply(this),
         // Bold Font
-        bf: bf,
+        bf: (txt) => bf.apply(this, [txt]),
         // Underline
-        ul: ul,
+        ul: (txt) => ul.apply(this, [txt]),
         // Paragraph Entry
-        par: par,
+        par: (txt) => par.apply(this, [txt]),
         // Enumerated Paragraphs (uses counter)
-        enum: enumP,
+        enum: (ttl, txt) => enumP.apply(this, [ttl, txt]),
         // Enumerated Heading (uses counter)
-        enumHead: enumHead,
+        enumHead: (ttl) => enumHead.apply(this, [ttl]),
         // Floating Title (Right)
         floatRightHead: (hd) => floatRightHead.apply(this, [hd]),
         // Floating Title (Left)
@@ -721,15 +721,15 @@ const latexEngine = (function latexEng() {
         // ---LATEX FORMATTING & STYLE FUNCTIONS---
         // =======================================>
         // Generate Custom Styles
-        newStyle: newStyle,
+        newStyle: (txt, flg) => newStyle.apply(this, [txt, flg]),
         // Generate Flags Object for Use (defaults)
-        genFlags: genFlags,
+        genFlags: () => genFlags.apply(this),
         // New Style Formatting
-        styleAs: styleAs(),
+        styleAs: () => styleAs.apply(this),
         // Return Styled Result
-        putRev: putRev,
+        putRev: (rvh, sty, n, m) => putRev.apply(this, [rvh, sty, n, m]),
         // Return Styled Result from Direct Input
-        putRevD: putRevD,
+        putRevD: (rev, sty) => putRevD.apply(this, [rev, sty]),
     }
 })();
 
