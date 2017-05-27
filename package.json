@@ -4,6 +4,7 @@
   "description": "A javascript framework for generating pdf documents & contracts easily through its built in commands.",
   "main": "example.js",
   "scripts": {
+    "start": "nodemon example.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
