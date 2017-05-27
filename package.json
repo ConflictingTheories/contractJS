@@ -1,11 +1,11 @@
 {
   "name": "contractjs",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "A javascript framework for generating pdf documents & contracts easily through its built in commands.",
-  "main": "example.js",
+  "main": "lib/latexEngine.js",
   "scripts": {
     "start": "nodemon example.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"run -- npm start -- for example\" && exit 1"
   },
   "repository": {
     "type": "git",
