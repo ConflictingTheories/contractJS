@@ -20,7 +20,7 @@ const server = require('http').Server(app);
 const ltxGen = require('./lib/latexEngine.js');
 
 // VARIABLES
-let port = 3000;
+let port = 4000;
 
 // INTERNAL LIBRARIES
 
@@ -35,14 +35,14 @@ app.use(bp.urlencoded({
 
 
 // LATEX OUTPUT
-app.use("/ltx", (req, res, next)=> {
-    console.log('Sending PDF File');
+app.use("/ltx", (req, res, next) => {
     let myStream = [""];
-    ltxGen.init(undefined, false, __dirname);
+    // Initialize Stream
+    ltxGen.init(myStream, false, __dirname);
     ltxGen.begin();
-    ltxGen.floatRightHead('YO')
-    ltxGen.section('Howdy');
-    ltxGen.subsection('HELLO WORLD!');
+    //Pre-made Section
+    basicSection(ltxGen);
+    // End Stream
     ltxGen.end();
     ltxGen.toLTX()
         .then((ltx) => {
@@ -58,9 +58,7 @@ app.use("/dvi", (req, res, next) => {
     let myStream = [""];
     ltxGen.init(myStream, false, __dirname);
     ltxGen.begin();
-    ltxGen.floatRightHead('YO')
-    ltxGen.section('Howdy');
-    ltxGen.subsection('HELLO WORLD!');
+    basicSection(ltxGen);
     ltxGen.end();
     ltxGen.toDVI()
         .then((dvi) => {
@@ -92,7 +90,19 @@ app.use("/pdf", (req, res, next) => {
 });
 
 // Example PDF Section
-function basicSection(ltx){
+function basicSection(ltx) {
+    let revHistory = ["NEW", "OLD"];
+    ltxGen.table(["X", "X", "X"], [
+        ["NAME", "DATE", "3002"],
+        ["Dawg", "Bounty", ""]
+    ]);
+    ltxGen.styleAs().neq(revHistory, 0, 1);
+    ltxGen.br();
+    ltxGen.styleAs().new(revHistory, 0);
+    ltxGen.br();
+    ltxGen.styleAs().old(revHistory, 0, 1);
+    ltxGen.br();
+    ltxGen.styleAs().eq(revHistory, 0, 0);
     ltx.floatRightHead('floatRightHead');
     ltx.br();
     ltx.floatLeftHead('floatLeftHead')
@@ -103,7 +113,7 @@ function basicSection(ltx){
     ltx.br();
     ltx.enum('', "enum: enumerated paragraph (non-label)");
     ltx.br();
-    ltx.definition("defintion","defintion");
+    ltx.definition("defintion", "defintion");
     ltx.br();
     ltx.plain("plain");
     ltx.br();
@@ -113,54 +123,19 @@ function basicSection(ltx){
     ltx.br();
     ltx.ul("ul");
     ltx.br();
-    ltx.par("par","par");
+    ltx.par("par", "par");
     ltx.br();
     ltx.enumHead("enumHead");
 }
 
-// PDF BASE64 OUTPUT
-app.use("/pdf64", (req, res, next) =>{
-    console.log('Sending PDF File');
-    let myStream = [""];
-    ltxGen.init(myStream, false, __dirname);
-    ltxGen.begin();
-    ltxGen.floatRightHead('YO')
-    ltxGen.section('Howdy');
-    ltxGen.subsection('HELLO WORLD!');
-    ltxGen.end();
-    ltxGen.toPDF64()
-        .then((pdf64) => {
-            res.contentType('application/pdf');
-            pdf64.pipe(res);
-            // res.send(pdf64.join(""))
-            // res.send(Buffer.from(pdf64.join(""),"utf-8"));
-            // mail.attachments = new Array();
-            // mail.attachments.push({
-            //     content: attachment,
-            //     type: "application/pdf",
-            //     filename: "agreement.pdf",
-            //     //disposition: "attachment"
-            // });
-            // res.writeHead(200, {
-            //     'Content-Type': 'application/pdf',
-            //     'Content-Disposition': 'attachment; filename=myDoc.pdf',
-            //     'Content-Length': ltxGen._pdf.length
-            // });
-            // res.end(ltxGen._pdf);
-            // pdf64.pipe(res);
-        })
-        .catch((err) => console.error(err));
-});
-
-
 // CANVAS PAGE
-app.use("/", (req,res,next)=>{
+app.use("/", (req, res, next) => {
     res.send("/ --> /pdf /ltx /dvi");
 });
 
 // LISTEN ON PORT
 server.listen(port, () => {
-    console.log('PDF Generator is Now Live @ localhost:',port);
+    console.log('PDF Generator is Now Live @ localhost:', port);
 });
 
 // FALLBACK FOR PORT
@@ -168,7 +143,7 @@ process.on("uncaughtException", function (e) {
     console.log("ERROR: " + e);
     if (e.errno === "EADDRINUSE") {
         //console.log("Falling back to port 5000");
-        
+
         console.log("Error ---> Port in Use: Please select another port: ");
         const readline = require('readline');
         const rl = readline.createInterface({
