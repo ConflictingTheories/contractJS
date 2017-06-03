@@ -4,7 +4,7 @@
   "description": "A javascript framework for generating pdf documents & contracts easily through its built in commands.",
   "main": "lib/latexEngine.js",
   "scripts": {
-    "start": "nodemon example.js",
+    "start": "pm2 start example.js",
     "test": "echo \"run -- npm start -- for example\" && exit 1"
   },
   "repository": {
@@ -35,6 +35,7 @@
     "express-session": "^1.15.0",
     "fs-extra": "^2.0.0",
     "latex-ex": "0.0.4",
+    "pm2": "^2.4.6",
     "temp": "^0.8.3",
     "through": "^2.3.8"
   }
